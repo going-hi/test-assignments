@@ -1,11 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
-import { CreateShortcodeDto } from '../dto/create-shortcode.dto'
-
+import { CreateShortcodeDto } from '../dto'
 import { InjectRepository } from '@nestjs/typeorm'
 import { ShortcodeEntity } from '../entities/shortcode.entity'
 import { Repository } from 'typeorm'
 import * as shortid from 'shortid'
-
 @Injectable()
 export class ShortcodeService {
 	constructor(
@@ -15,9 +13,13 @@ export class ShortcodeService {
 
 	async create(dto: CreateShortcodeDto) {
 		if (dto.custom) {
-			const oldCode = await this.getByCode(dto.custom)
+			const customCode = dto.custom.replaceAll(' ', '_')
+			const oldCode = await this.getByCode(customCode)
 			if (oldCode) throw new BadRequestException('Код с таким кастомным кодом уже существует')
-			const createdCode = this.shortcodeRepository.create({ code: dto.custom, link: dto.url })
+			const createdCode = this.shortcodeRepository.create({
+				code: customCode,
+				link: dto.url
+			})
 			return await this.shortcodeRepository.save(createdCode)
 		}
 
